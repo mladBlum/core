@@ -26,9 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     username = entry.data[CONF_USERNAME]
     password = entry.data[CONF_PASSWORD]
 
-    logging.info(
-        f"Try to connect to {host} with user {username} and password {password}"
-    )
+    logging.info(f"Try to connect to {host} with user {username}")
 
     websession = async_get_clientsession(hass)
 

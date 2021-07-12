@@ -5,6 +5,7 @@ import pysdsbapi
 import voluptuous as vol
 
 from homeassistant.components.cover import (
+    DEVICE_CLASS_DOOR,
     PLATFORM_SCHEMA,
     SUPPORT_CLOSE,
     SUPPORT_OPEN,
@@ -55,6 +56,18 @@ class SDSModule(CoverEntity):
         """Initialize an Module."""
         self._module = module
         self._name = module.name
+        self._device_class = DEVICE_CLASS_DOOR
+        self._icon = "mdi:dresser"
+
+    @property
+    def icon(self):
+        """Return icon of cover."""
+        return self._icon
+
+    @property
+    def device_class(self):
+        """Return device class of cover."""
+        return self._device_class
 
     @property
     def name(self):
@@ -64,33 +77,25 @@ class SDSModule(CoverEntity):
     @property
     def state(self):
         """Return state of cover."""
-        if self.is_closed:
+        if self._module.state == "closed":
             return STATE_CLOSED
         else:
             return STATE_OPEN
 
     @property
-    def is_closed(self):
-        """Return True if cover is closed, false otherwise."""
-
-        is_closed = self._module.state == "closed"
-        logging.info("------------")
-        logging.info(f"Module {self.name} is on state: {self._module.state}")
-        logging.info(f"Module {self.name} is_closed: {is_closed}")
-        logging.info("------------")
-
-        return is_closed
-        if self._module.state == "close":
-            return True
-        return False
-
-    @property
     def current_cover_position(self):
-        """Return the current position of the cover."""
+        """Return the current position of the cover.
 
-        if self.is_closed:
-            return 100
-        return 0
+        None is unknown, 0 is closed, 100 is fully open.
+        """
+        position = None
+        if self.state == STATE_CLOSED:
+            position = 0
+
+        if self.state == STATE_OPEN:
+            position = 100
+
+        return position
 
     @property
     def supported_features(self):
