@@ -44,7 +44,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             bridgeAPI = BridgeAPI(auth)
             bridge = await bridgeAPI.async_get_bridge()
             logging.info(
-                f"Connection successful with {bridge.name}, version {bridge.bridgeAppVersion}"
+                f"Connection successful with {bridge.bridgeId}, version {bridge.bridgeAppVersion}"
             )
 
     except aiohttp.ClientResponseError as error:
