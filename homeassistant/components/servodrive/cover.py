@@ -52,7 +52,7 @@ async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
 class SDSModule(CoverEntity):
     """The platform class required by Home Assistant."""
 
-    def __init__(self, module):
+    def __init__(self, module: pysdsbapi.Module):
         """Initialize an Module."""
         self._module = module
         self._name = module.name

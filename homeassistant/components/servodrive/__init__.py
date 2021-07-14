@@ -30,7 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     websession = async_get_clientsession(hass)
 
-    auth = Auth(websession, host, username, password, port=80)
+    auth = Auth(websession, host, username, password)
     bridgeAPI = BridgeAPI(auth)
 
     # Store an API object for your platforms to access
