@@ -1811,7 +1811,7 @@ pysaj==0.0.16
 pysdcp==1
 
 # homeassistant.components.servodrive
-pysdsbapi == 0.6.0
+pysdsbapi == 0.7.0
 
 # homeassistant.components.sensibo
 pysensibo==1.0.18

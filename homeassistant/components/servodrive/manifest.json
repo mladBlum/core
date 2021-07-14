@@ -3,7 +3,7 @@
   "name": "servodrive",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/servodrive",
-  "requirements": ["pysdsbapi == 0.6.0"],
+  "requirements": ["pysdsbapi == 0.7.0"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},

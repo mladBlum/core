@@ -1,15 +1,19 @@
 """Config flow for servodrive integration."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
+import aiohttp
+from pysdsbapi import Auth, BridgeAPI
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession, async_timeout
 
 from .const import DOMAIN
 
@@ -24,46 +28,33 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-class PlaceholderHub:
-    """Placeholder class to make tests pass.
-
-    TODO Remove this placeholder class and replace with things from your PyPI package.
-    """
-
-    def __init__(self, host: str) -> None:
-        """Initialize."""
-        self.host = host
-
-    async def authenticate(self, username: str, password: str) -> bool:
-        """Test if we can authenticate with the host."""
-        return True
-
-
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect.
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    # TODO validate the data can be used to set up a connection.
+    websession = async_get_clientsession(hass)
+    host = data["host"]
+    username = data["username"]
 
-    # If your PyPI package is not built with async, pass your methods
-    # to the executor:
-    # await hass.async_add_executor_job(
-    #     your_validate_func, data["username"], data["password"]
-    # )
+    try:
+        async with async_timeout.timeout(5):
+            logging.info(f"Try to connect to {host} with user {username}")
+            auth = Auth(websession, host, username, data["password"])
+            bridgeAPI = BridgeAPI(auth)
+            bridge = await bridgeAPI.async_get_bridge()
+            logging.info(
+                f"Connection successful with {bridge.name}, version {bridge.bridgeAppVersion}"
+            )
 
-    hub = PlaceholderHub(data["host"])
+    except aiohttp.ClientResponseError as error:
+        if error.status == 403:
+            raise InvalidAuth from error
+        raise CannotConnect from error
+    except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        raise CannotConnect from error
 
-    if not await hub.authenticate(data["username"], data["password"]):
-        raise InvalidAuth
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
-
-    # Return info that you want to store in the config entry.
-    return {"title": "Name of the device"}
+    return {"title": "SERVO-DRIVE"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
