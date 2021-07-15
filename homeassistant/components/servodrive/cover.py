@@ -1,5 +1,7 @@
 """Support for IKEA Tradfri covers."""
+from datetime import timedelta
 import logging
+from typing import Final
 
 import pysdsbapi
 import voluptuous as vol
@@ -33,6 +35,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_PASSWORD): cv.string,
     }
 )
+
+SCAN_INTERVAL: Final = timedelta(seconds=1)
 
 
 async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
@@ -114,13 +118,11 @@ class SDSModule(CoverEntity):
         """Open the cover."""
 
         await self._module.async_control("open")
-        await self._module.async_update()
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
 
         await self._module.async_control("close")
-        await self._module.async_update()
 
     async def async_update(self):
         """

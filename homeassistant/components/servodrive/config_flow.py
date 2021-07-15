@@ -10,6 +10,7 @@ from pysdsbapi import Auth, BridgeAPI
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -21,9 +22,9 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("host"): str,
-        vol.Required("username"): str,
-        vol.Required("password"): str,
+        vol.Required(CONF_HOST): str,
+        vol.Required(CONF_USERNAME): str,
+        vol.Required(CONF_PASSWORD): str,
     }
 )
 
@@ -34,13 +35,13 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     websession = async_get_clientsession(hass)
-    host = data["host"]
-    username = data["username"]
+    host = data[CONF_HOST]
+    username = data[CONF_USERNAME]
 
     try:
         async with async_timeout.timeout(5):
             logging.info(f"Try to connect to {host} with user {username}")
-            auth = Auth(websession, host, username, data["password"])
+            auth = Auth(websession, host, username, data[CONF_PASSWORD])
             bridgeAPI = BridgeAPI(auth)
             bridge = await bridgeAPI.async_get_bridge()
             logging.info(
