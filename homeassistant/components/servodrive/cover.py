@@ -114,11 +114,13 @@ class SDSModule(CoverEntity):
         """Open the cover."""
 
         await self._module.async_control("open")
+        await self._module.async_update()
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
 
         await self._module.async_control("close")
+        await self._module.async_update()
 
     async def async_update(self):
         """
@@ -128,4 +130,3 @@ class SDSModule(CoverEntity):
         """
 
         await self._module.async_update()
-        self._state = self._module.state
