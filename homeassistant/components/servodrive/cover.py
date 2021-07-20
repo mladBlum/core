@@ -36,7 +36,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SCAN_INTERVAL: Final = timedelta(seconds=1)
+SCAN_INTERVAL: Final = timedelta(seconds=15)
 
 
 async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
