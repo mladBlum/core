@@ -1258,7 +1258,7 @@ pysabnzbd==1.1.1
 pysensibo==1.0.18
 
 # homeassistant.components.servodrive
-pysdsbapi == 0.7.0
+pysdsbapi == 0.8.0
 
 # homeassistant.components.serial
 # homeassistant.components.zha
