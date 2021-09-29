@@ -1,4 +1,4 @@
-"""Support for IKEA Tradfri covers."""
+"""Support for servo drive drawers."""
 from datetime import timedelta
 import logging
 from typing import Final
@@ -25,8 +25,6 @@ import homeassistant.helpers.config_validation as cv
 
 from .const import DOMAIN
 
-_LOGGER = logging.getLogger(__name__)
-
 # Validation of the user's configuration
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -36,7 +34,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SCAN_INTERVAL: Final = timedelta(seconds=15)
+_LOGGER = logging.getLogger(__name__)
+SCAN_INTERVAL: Final = timedelta(seconds=60)
 
 
 async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
@@ -50,7 +49,14 @@ async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
     # return
 
     modules = await bridgeAPI.async_get_modules()
-    async_add_entities(SDSModule(module) for module in modules)
+    async_add_entities(
+        [
+            SDSModule(module)
+            for module in modules
+            if (module.type == "flap" or module.type == "drawer")
+        ],
+        update_before_add=True,
+    )
 
 
 class SDSModule(CoverEntity):
@@ -58,7 +64,7 @@ class SDSModule(CoverEntity):
 
     def __init__(self, module: pysdsbapi.Module):
         """Initialize an Module."""
-        self._module = module
+        self._module: pysdsbapi.Module = module
         self._name = module.name
         self._device_class = DEVICE_CLASS_DOOR
         self._icon = "mdi:dresser"
@@ -85,6 +91,11 @@ class SDSModule(CoverEntity):
             return STATE_CLOSED
         else:
             return STATE_OPEN
+
+    @property
+    def should_poll(self):
+        """Return should_poll setting of cover."""
+        return False
 
     @property
     def current_cover_position(self):
@@ -118,11 +129,21 @@ class SDSModule(CoverEntity):
         """Open the cover."""
 
         await self._module.async_control("open")
+        _LOGGER.info("Do async_open_cover of servodrive integration")
+        _LOGGER.info(
+            f"State of {self._module.id} is {self._module.state} and own method deliver: {self.state}"
+        )
+        self.async_write_ha_state()
 
     async def async_close_cover(self, **kwargs):
         """Close cover."""
 
         await self._module.async_control("close")
+        _LOGGER.info("Do async_close_cover of servodrive integration")
+        _LOGGER.info(
+            f"State of {self._module.id} is {self._module.state} and own method deliver: {self.state}"
+        )
+        self.async_write_ha_state()
 
     async def async_update(self):
         """
@@ -130,5 +151,7 @@ class SDSModule(CoverEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-
         await self._module.async_update()
+        _LOGGER.info(
+            f"Do async_update of servodrive integration for {self._module.id}, got {self._module.state}"
+        )
