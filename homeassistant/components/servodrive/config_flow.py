@@ -14,7 +14,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.aiohttp_client import async_get_clientsession, async_timeout
+from homeassistant.helpers import aiohttp_client
 
 from .const import DOMAIN
 
@@ -34,12 +34,12 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    websession = async_get_clientsession(hass)
+    websession = aiohttp_client.async_get_clientsession(hass)
     host = data[CONF_HOST]
     username = data[CONF_USERNAME]
 
     try:
-        async with async_timeout.timeout(5):
+        async with aiohttp_client.async_timeout.timeout(5):
             logging.info(f"Try to connect to {host} with user {username}")
             auth = Auth(websession, host, username, data[CONF_PASSWORD])
             bridgeAPI = BridgeAPI(auth)
@@ -89,6 +89,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+    # In Combination with __init__ . The bridge should not be added twice or more often
+    # async def async_step_link(self, user_input=None):
+    #    if user_input is not None:
+    #
+    #        host = user_input[CONF_HOST]
+    #        username = user_input[CONF_USERNAME]
+    #        password = user_input[CONF_PASSWORD]
+    #
+    #        websession = aiohttp_client.async_get_clientsession(self.hass)
+    #
+    #        auth = Auth(websession, host, username, password)
+    #
+    #    return self.async_show_form(step_id="link", errors=errors)
 
 
 class CannotConnect(HomeAssistantError):

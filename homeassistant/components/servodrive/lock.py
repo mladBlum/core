@@ -9,11 +9,12 @@ import pysdsbapi
 import voluptuous as vol
 
 from homeassistant.components.lock import PLATFORM_SCHEMA, SUPPORT_OPEN, LockEntity
+from homeassistant.components.servodrive.servodrive_device import ServodriveDevice
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME, STATE_CLOSED
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN
+from .const import DOMAIN, SERVODRIVE_LOCK
 
 # Validation of the user's configuration
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -32,27 +33,29 @@ async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
     """Load SDS Modules."""
 
     bridgeAPI: pysdsbapi.BridgeAPI = hass.data[DOMAIN][entry.entry_id]
+    bridge = await bridgeAPI.async_get_bridge()
     modules = await bridgeAPI.async_get_modules()
     async_add_entities(
-        [SDSLock(module) for module in modules if module.type == "lock"],
+        [
+            ServodriveLock(module, bridge)
+            for module in modules
+            if module.type == SERVODRIVE_LOCK
+        ],
         update_before_add=True,
     )
 
 
-class SDSLock(LockEntity):
+class ServodriveLock(ServodriveDevice, LockEntity):
     """Representation of a Sesame device."""
 
-    def __init__(self, lock: pysdsbapi.Module) -> None:
-        """Initialize an SDSlock Module."""
-        self._module: pysdsbapi.Module = lock
-
-        # Cached properties
-        self._name = lock.name
+    def __init__(self, module: pysdsbapi.Module, bridge: pysdsbapi.Bridge) -> None:
+        """Initialize an Servodrive lock module."""
+        super().__init__(module, bridge)
 
     @property
     def name(self) -> str:
-        """Return the name of the device."""
-        return self._name
+        """Return the name of the lock."""
+        return self._module.name
 
     @property
     def is_locked(self) -> bool:

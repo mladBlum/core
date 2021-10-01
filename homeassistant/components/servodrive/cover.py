@@ -21,9 +21,21 @@ from homeassistant.const import (
     STATE_CLOSED,
     STATE_OPEN,
 )
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN
+from .const import DOMAIN, SERVODRIVE_DRAWER, SERVODRIVE_FLAP
+from .servodrive_device import ServodriveDevice
+
+DEVICE_CLASS = {
+    SERVODRIVE_FLAP: DEVICE_CLASS_DOOR,
+    SERVODRIVE_DRAWER: DEVICE_CLASS_DOOR,
+}
+
+ICON = {
+    SERVODRIVE_FLAP: "mdi:cupboard",
+    SERVODRIVE_DRAWER: "mdi:dresser",
+}
 
 # Validation of the user's configuration
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -38,36 +50,40 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL: Final = timedelta(seconds=60)
 
 
-async def async_setup_entry(hass, entry: ConfigEntry, async_add_entities):
-    """Load SDS Modules."""
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+):
+    """Set up drawers and flaps for SERVODRIVE integration."""
 
     bridgeAPI: pysdsbapi.BridgeAPI = hass.data[DOMAIN][entry.entry_id]
 
     # Verify that passed in configuration works
+    # Ab pysdsblib 0.0.9
     # if not bridgeAPI.is_valid_login():
-    #    _LOGGER.error("Could not connect to AwesomeLight hub")
+    #    _LOGGER.error("Could not connect to SERVORDRIVE Bridge")
     # return
 
+    bridge = await bridgeAPI.async_get_bridge()
     modules = await bridgeAPI.async_get_modules()
     async_add_entities(
         [
-            SDSModule(module)
+            ServodriveCover(module, bridge)
             for module in modules
-            if (module.type == "flap" or module.type == "drawer")
+            if (module.type == SERVODRIVE_FLAP or module.type == SERVODRIVE_DRAWER)
         ],
         update_before_add=True,
     )
 
 
-class SDSModule(CoverEntity):
+class ServodriveCover(ServodriveDevice, CoverEntity):
     """The platform class required by Home Assistant."""
 
-    def __init__(self, module: pysdsbapi.Module):
+    def __init__(self, module: pysdsbapi.Module, bridge: pysdsbapi.Bridge):
         """Initialize an Module."""
-        self._module: pysdsbapi.Module = module
-        self._name = module.name
-        self._device_class = DEVICE_CLASS_DOOR
-        self._icon = "mdi:dresser"
+        super().__init__(module, bridge)
+
+        self._device_class = DEVICE_CLASS.get(self._module.type)
+        self._icon = ICON.get(self._module.type)
 
     @property
     def icon(self):
@@ -82,7 +98,7 @@ class SDSModule(CoverEntity):
     @property
     def name(self):
         """Return friendly name of cover."""
-        return self._name
+        return self._module.name
 
     @property
     def state(self):
@@ -93,9 +109,14 @@ class SDSModule(CoverEntity):
             return STATE_OPEN
 
     @property
-    def should_poll(self):
+    def assumed_state(self) -> bool:
+        """Return assumed_state setting of cover."""
+        return True
+
+    @property
+    def should_poll(self) -> bool:
         """Return should_poll setting of cover."""
-        return False
+        return True
 
     @property
     def current_cover_position(self):
