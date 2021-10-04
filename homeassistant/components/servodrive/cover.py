@@ -47,7 +47,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 _LOGGER = logging.getLogger(__name__)
-SCAN_INTERVAL: Final = timedelta(seconds=60)
+SCAN_INTERVAL: Final = timedelta(seconds=5)
 
 
 async def async_setup_entry(
@@ -116,7 +116,7 @@ class ServodriveCover(ServodriveDevice, CoverEntity):
     @property
     def should_poll(self) -> bool:
         """Return should_poll setting of cover."""
-        return True
+        return False
 
     @property
     def current_cover_position(self):

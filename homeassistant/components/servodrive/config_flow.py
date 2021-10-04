@@ -90,20 +90,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
 
-    # In Combination with __init__ . The bridge should not be added twice or more often
-    # async def async_step_link(self, user_input=None):
-    #    if user_input is not None:
-    #
-    #        host = user_input[CONF_HOST]
-    #        username = user_input[CONF_USERNAME]
-    #        password = user_input[CONF_PASSWORD]
-    #
-    #        websession = aiohttp_client.async_get_clientsession(self.hass)
-    #
-    #        auth = Auth(websession, host, username, password)
-    #
-    #    return self.async_show_form(step_id="link", errors=errors)
-
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
